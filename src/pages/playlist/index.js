@@ -4,8 +4,11 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { Creators as PlaylistDetailsActions } from '../../store/ducks/playlistDetails';
+import { Creators as PlayerActions } from '../../store/ducks/player';
 
-import { Container, Header, SongList } from './styles';
+import {
+  Container, Header, SongList, SongItem,
+} from './styles';
 
 import Loading from '../../components/Loading';
 
@@ -37,7 +40,15 @@ class Playlist extends Component {
         ),
       }),
       loading: PropTypes.bool,
+      currentSong: PropTypes.shape({
+        id: PropTypes.number,
+      }).isRequired,
     }).isRequired,
+    loadSong: PropTypes.func.isRequired,
+  };
+
+  state = {
+    selectedSong: null,
   };
 
   componentDidMount() {
@@ -97,7 +108,13 @@ músicas
               </tr>
             ) : (
               playlist.songs.map(song => (
-                <tr key={song.id}>
+                <SongItem
+                  key={song.id}
+                  onClick={() => this.setState({ selectedSong: song.id })}
+                  onDoubleClick={() => this.props.loadSong(song, playlist.songs)}
+                  selected={this.state.selectedSong === song.id}
+                  playing={this.props.currentSong && this.props.currentSong.id === song.id}
+                >
                   <td>
                     <img src={PlusIcon} alt="Adicionar" />
                   </td>
@@ -105,7 +122,7 @@ músicas
                   <td>{song.author}</td>
                   <td>{song.album}</td>
                   <td>3:26</td>
-                </tr>
+                </SongItem>
               ))
             )}
           </tbody>
@@ -127,9 +144,10 @@ músicas
 
 const mapStateToProps = state => ({
   playlistDetails: state.playlistDetails,
+  currentSong: state.player.currentSong,
 });
 
-const mapDispatchToProps = dispatch => bindActionCreators(PlaylistDetailsActions, dispatch);
+const mapDispatchToProps = dispatch => bindActionCreators({ ...PlaylistDetailsActions, ...PlayerActions }, dispatch);
 
 export default connect(
   mapStateToProps,
